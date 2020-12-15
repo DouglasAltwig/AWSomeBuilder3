@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Creates a bucket and bucket policy.'
+Metadata: 
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: 'S3 parameters'
+      Parameters:
+      - S3BucketName
+
+Parameters: 
+  S3BucketName:
+    Description: 'The name of the bucket.'
+    Type: 'String'
+    Default: 'octank-moderation'
+    # AllowedPattern: '^[a-z0-9]{5,40}$'
+    # ConstraintDescription: '3-63 characters; must contain only lowercase letters or numbers'
+
+Resources: 
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties: 
+      BucketName: !Ref S3BucketName
+      Tags:
+        - Key: 'Name'
+          Value: !Ref S3BucketName
+
+Outputs:
+  BucketName:
+    Description: 'Name of the S3 Bucket.'
+    Value: !Ref S3Bucket
+    Export:
+      Name: 'BucketName'

@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'VPC: Gateway Endpoint (S3): This template should simulate a file server on on-prem environment.'
+Metadata: 
+  'AWS::CloudFormation::Interface':
+    ParameterGroup:
+    - Label:
+        default: 'Parent Stacks'
+      Parameters:
+      - ParentVPCStack
+Parameters: 
+  ParentVPCStack:
+    Description: 'Stack name of parent VPC stack based on vpc-2azs.yaml template.'
+    Type: 'String'
+
+Resources: 
+  EndpointS3:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      RouteTableIds: {'Fn::Split': [',', {'Fn::ImportValue': !Sub '${ParentVPCStack}-RouteTables'}]}
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId: {'Fn::ImportValue': !Sub '${ParentVPCStack}-VPC'}
+
+Outputs:
+  StackName:
+    Description: 'Stack name.'
+    Value: !Sub '${AWS::StackName}'
+  Endpoint:
+    Description: 'The VPC endpoint to S3.'
+    Value: !Ref EndpointS3
+    Export:
+      Name: !Sub '${AWS::StackName}-EndpointS3'
