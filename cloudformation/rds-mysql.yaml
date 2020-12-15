@@ -1,0 +1,290 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'State: RDS MySQL'
+Metadata: 
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: 'Parent Stacks'
+      Parameters:
+      - ParentVPCStack
+      - ParentClientStack
+      - ParentKmsKeyStack
+    - Label:
+        default: 'RDS Parameters'
+      Parameters:
+      - AllocatedStorage
+      - AllowMajorVersionUpgrade
+      - AutoMinorVersionUpgrade
+      - BackupRetentionPeriod
+      - CopyTagsToSnapshot
+      - DBInstanceClass
+      - DBName
+      - DBParameterGroupName
+      - DBSnapshotIdentifier
+      - EnableIAMDatabaseAuthentication
+      - Engine
+      - EngineVersion
+      - MasterUsername
+      - MasterUserPassword
+      - MultiAZ
+      - DBOptionGroupName
+      - Port
+      - PreferredBackupWindow
+      - PreferredMaintenanceWindow
+      - PubliclyAccessible
+      - StorageEncrypted
+      - StorageType
+Parameters: 
+  ParentVPCStack:
+    Description: 'Stack name of parent VPC stack based on vpc-1az.yaml template.'
+    Type: 'String'
+
+  ParentClientStack:
+    Description: 'Stack name of parent client stack based on client-sg.yaml template.'
+    Type: 'String'
+
+  ParentKmsKeyStack:
+    Description: 'Optional Stack name of parent KMS key stack based on kms-key.yaml template (ignored when DBSnapshotIdentifier is set, value used from snapshot).'
+    Type: String
+    Default: ''
+
+  AllocatedStorage:
+    Description: 'Constraints to the amount of storage for General Purpose (SSD) storage (gp2).'
+    Type: 'Number'
+    Default: 20
+    ConstraintDescription: 'Must be an integer from 20 to 65536'
+    MinValue: 20
+    MaxValue: 65536
+
+  AllowMajorVersionUpgrade:
+    Description: 'Indicates that major version upgrades are allowed.'
+    Type: 'String'
+    Default: false
+    AllowedValues: [true, false]
+
+  AutoMinorVersionUpgrade:
+    Description: 'Indicates that minor version patches are applied automatically.'
+    Type: 'String'
+    Default: true
+    AllowedValues: [true, false]
+    
+  BackupRetentionPeriod:
+    Description: 'The number of days for which automated backups are retained.'
+    Type: 'Number'
+    Default: 30
+    ConstraintDescription: 'Must be a value from 0 to 35.'
+    MinValue: 0
+    MaxValue: 35
+
+  CopyTagsToSnapshot:
+    Description: 'A value that indicates whether to copy tags from the DB instance to snapshots of the DB instance.' 
+    Type: 'String'
+    Default: false
+    AllowedValues: [true, false]
+
+  DBInstanceClass:
+    Description: 'Contains the name of the compute and memory capacity class of the DB instance.'
+    Type: 'String'
+    Default: 'db.t3.micro'
+
+  DBName:
+    Description: 'The name of the database to create when the DB instance is created.' 
+    Type: 'String'
+    MinLength: 1
+    MaxLength: 64
+    ConstraintDescription: | 
+      'Must contain 1 to 64 letters or numbers. 
+      Can't be a word reserved by the specified database engine.'
+
+  DBParameterGroupName:
+    Description: 'The name of an existing DB parameter group or a reference to an AWS::RDS::DBParameterGroup resource.'
+    Type: 'String'
+    Default: ''
+
+  DBSnapshotIdentifier:
+    Description: 'The name or Amazon Resource Name (ARN) of the DB snapshot that''s used to restore the DB instance.'
+    Type: 'String'
+    Default: ''
+
+  EnableIAMDatabaseAuthentication:
+    Description: 'Enable mapping of AWS Identity and Access Management (IAM) accounts to database accounts (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html).'
+    Type: 'String'
+    AllowedValues: [true, false]
+    Default: false
+
+  Engine:
+    Description: 'The name of the database engine.'
+    Type: 'String'
+    Default: 'mysql'
+    AllowedValues:
+    - aurora
+    - aurora-mysql
+    - aurora-postgresql
+    - mariadb
+    - mysql
+    - oracle-ee
+    - oracle-se2
+    - oracle-se1
+    - oracle-se
+    - postgres
+    - sqlserver-ee
+    - sqlserver-se
+    - sqlserver-ex
+    - sqlserver-web
+
+  EngineVersion:
+    Description: 'The version number of the database engine to use.'
+    Type: 'String'
+    Default: '8.0.20'
+  
+  MasterUsername:
+    NoEcho: true
+    Description: 'The master user name for the DB instance.'
+    Type: 'String'
+    Default: 'admin'
+    MinLength: 5
+    MaxLength: 16
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: 'The username must begin with a letter and contain only alphanumeric characters.'
+
+  MasterUserPassword:
+    NoEcho: true
+    Description: 'Password MySQL database access.'
+    Type: 'String'
+    MinLength: 8
+    MaxLength: 41
+    ConstraintDescription: 'Must contain from 8 to 41 characters.'
+
+  MultiAZ:
+    Description: 'Specifies whether the database instance is a multiple Availability Zone deployment.'
+    Type: 'String'
+    Default: false
+    AllowedValues: [true, false]
+
+  DBOptionGroupName:
+    Description: 'Optional name of an existing DB option group.'
+    Type: 'String'
+    Default: ''
+
+  Port:
+    Description: 'The port number on which the database accepts connections.'
+    Type: 'Number'
+    Default: 3306
+
+  PreferredBackupWindow:
+    Description: 'The daily time range during which automated backups are created if automated backups are enabled.'
+    Type: 'String'
+    Default: '05:00-06:00'
+    ConstraintDescription: | 
+      'Must be in the format hh24:mi-hh24:mi.
+      Must be in Universal Coordinated Time (UTC).
+      Must not conflict with the preferred maintenance window.
+      Must be at least 30 minutes.'
+    
+  PreferredMaintenanceWindow:
+    Description: 'The weekly time range during which system maintenance can occur, in Universal Coordinated Time (UTC).'
+    Type: 'String'
+    Default: 'Tue:07:00-Tue:08:00'
+    ConstraintDescription: 'Format: ddd:hh24:mi-ddd:hh24:mi'
+
+  PubliclyAccessible:
+    Description: 'Indicates whether the DB instance is an internet-facing instance.'
+    Type: 'String'
+    Default: false
+    AllowedValues: [true, false]
+
+  StorageEncrypted:
+    Description: 'A value that indicates whether the DB instance is encrypted.'
+    Type: 'String'
+    Default: false
+    AllowedValues: [true, false]
+
+  StorageType:
+    Description: 'Specifies the storage type to be associated with the DB instance.'
+    Type: 'String'
+    Default: 'gp2'
+    ConstraintDescription: 'Valid values: standard | gp2 | io1'
+    AllowedValues: ['standard', 'gp2', 'io1']
+
+Conditions:
+  HasDBParameterGroupName: {'Fn::Not': [{'Fn::Equals': [!Ref DBParameterGroupName, '']}]}
+  HasDBSnapshotIdentifier: {'Fn::Not': [{'Fn::Equals': [!Ref DBSnapshotIdentifier, '']}]}
+  HasKmsKey: {'Fn::Not': [{'Fn::Equals': [!Ref ParentKmsKeyStack, '']}]}
+  HasKmsKeyAndNotDBSnapshotIdentifier: {'Fn::And': [{Condition: HasKmsKey}, {'Fn::Not': [{Condition: HasDBSnapshotIdentifier}]}]}
+  HasDBOptionGroupName: {'Fn::Not': [{'Fn::Equals': [!Ref DBOptionGroupName, '']}]}
+
+Resources: 
+  DatabaseSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Ref AWS::StackName
+      VpcId: {'Fn::ImportValue': !Sub '${ParentVPCStack}-VPC' }
+      SecurityGroupIngress:
+        - IpProtocol: 'tcp'
+          FromPort: !Ref Port
+          ToPort: !Ref Port
+          SourceSecurityGroupId: {'Fn::ImportValue': !Sub '${ParentClientStack}-ClientSecurityGroup'}
+  
+  # If there's no DB subnet group, then the DB instance isn't a VPC DB instance.
+  DBSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: !Ref AWS::StackName
+      SubnetIds: {'Fn::Split': [',', {'Fn::ImportValue': !Sub '${ParentVPCStack}-PrivateSubnets'}]}
+      Tags:
+        - Key: 'Name'
+          Value: 'DBSubnetGroup'
+
+  DBInstance:
+    DeletionPolicy: 'Snapshot' # AllowedValues: ['Delete','Retain', 'Snapshot']
+    UpdateReplacePolicy: 'Snapshot' # AllowedValues: ['Delete','Retain', 'Snapshot']
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      AllocatedStorage: !Ref AllocatedStorage
+      AllowMajorVersionUpgrade: !Ref AllowMajorVersionUpgrade
+      AutoMinorVersionUpgrade: !Ref AutoMinorVersionUpgrade
+      AvailabilityZone: !Select [0, !GetAZs '']
+      BackupRetentionPeriod: !Ref BackupRetentionPeriod
+      CopyTagsToSnapshot: !Ref CopyTagsToSnapshot
+      DBInstanceClass: !Ref DBInstanceClass
+      DBInstanceIdentifier: 'MySQL-Database'
+      DBName: !Ref DBName
+      DBParameterGroupName: {'Fn::If': [HasDBParameterGroupName, !Ref DBParameterGroupName, !Ref 'AWS::NoValue']}
+      DBSnapshotIdentifier: {'Fn::If': [HasDBSnapshotIdentifier, !Ref DBSnapshotIdentifier, !Ref 'AWS::NoValue']}
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      EnableIAMDatabaseAuthentication: !Ref EnableIAMDatabaseAuthentication
+      Engine: !Ref Engine
+      EngineVersion: !Ref EngineVersion
+      KmsKeyId: {'Fn::If': [HasKmsKeyAndNotDBSnapshotIdentifier, {'Fn::ImportValue': !Sub '${ParentKmsKeyStack}-KeyId'}, !Ref AWS::NoValue]}
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      MultiAZ: !Ref MultiAZ
+      OptionGroupName: {Fn::If: [HasDBOptionGroupName, !Ref DBOptionGroupName, !Ref 'AWS::NoValue']}
+      Port: !Ref Port
+      PreferredBackupWindow: !Ref PreferredBackupWindow
+      PreferredMaintenanceWindow: !Ref PreferredMaintenanceWindow
+      PubliclyAccessible: !Ref PubliclyAccessible 
+      StorageEncrypted: {Fn::If: [HasDBSnapshotIdentifier, !Ref 'AWS::NoValue', {'Fn::If': [HasKmsKey, true, false]}]}
+      StorageType: !Ref StorageType
+      VPCSecurityGroups: 
+        - !Ref DatabaseSecurityGroup
+      Tags:
+        - Key: 'Name'
+          Value: 'MySQL Database'
+
+Outputs:
+  StackName:
+    Description: 'Stack name.'
+    Value: !Sub '${AWS::StackName}'
+
+  InstanceName:
+    Description: 'The name of the database instance.'
+    Value: !Ref DBInstance
+    Export:
+      Name: !Sub '${AWS::StackName}-InstanceName'
+
+  SecurityGroupId:
+    Description: 'The security group used to manage access to RDS MySQL.'
+    Value: !Ref DatabaseSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-SecurityGroupId'
