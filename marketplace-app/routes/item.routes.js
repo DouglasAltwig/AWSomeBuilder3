@@ -15,6 +15,9 @@ router.get("/inreview", items.findAllInReview);
 // Retrieve all published Items
 router.get("/published", items.findAllPublished);
 
+// Retrieve a single File with URI
+router.get("/download/:bucket/:key", items.download);
+
 // Retrieve a single Item with id
 router.get("/:id", items.findOne);
 

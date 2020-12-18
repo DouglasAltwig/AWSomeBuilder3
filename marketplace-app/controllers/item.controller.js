@@ -1,7 +1,11 @@
 const db = require("../models");
 const Item = db.items;
 const Op = db.Sequelize.Op;
+const AWS = require('aws-sdk');
 
+AWS.config.update({region: 'us-east-1'})
+
+const s3 = new AWS.S3({apiVersion: '2006-03-01'})
 const Status = ["approved", "rejected", "in review", "escalated"]
 
 // Create and Save a new Item
@@ -31,19 +35,6 @@ exports.create = (req, res) => {
     res.status(409).send({message: "File Upload Error"});
     return;
   }
-
-  // {
-  //   fieldname: 'uploaded_file',
-  //   originalname: 'meme.jpg',
-  //   encoding: '7bit',
-  //   mimetype: 'image/jpeg',
-  //   destination: './views/data/uploads/',
-  //   filename: '49cb21606fce1aef59e155a7765af553',
-  //   path: 'views/data/uploads/49cb21606fce1aef59e155a7765af553',
-  //   size: 94091
-  // } [Object: null prototype] { nspeakers: '11' }
-
-  // return res.json({'imageUrl': req.file.location});
 
   // Create an Item
   const item = {
@@ -166,7 +157,41 @@ exports.deleteAll = (req, res) => {
     });
 };
 
-// find all items in review
+// Download file for a given bucket and key
+exports.download = (req, res) => {
+  // Get parameter from the request object
+  if (!req.params.bucket) {
+    res.status(400).send({message: "Bucket can not be empty!"});
+    return;
+  }
+  if (!req.params.key) {
+    res.status(400).send({message: "File can not be empty!"});
+    return;
+  }
+  const params = {'Bucket': req.params.bucket, 'Key': req.params.key}
+  s3.getObject(params)
+  .promise()
+  .then(data => {
+    console.log(data);
+    res.writeHead(200, {
+      'Content-Type': data.Metadata.mimetype,
+      'Content-disposition': 'attachment;filename=' + data.Metadata.originalName,
+      'Content-Length': data.ContentLength,
+      'x-timestamp': Date.now(),
+      'x-sent': true,
+        'ETag': data.ETag.slice(1,-1),
+        'Cache-Control': 0,
+        'Accept-Ranges': 'bytes'
+    });
+    res.end(Buffer.from(data.Body, 'binary'));
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving the file."
+    })
+  })
+}
 exports.findAllInReview = (req, res) => {
   Item.findAll({where: {status: "in review"}})
     .then(data => {
@@ -192,9 +217,3 @@ exports.findAllPublished = (req, res) => {
       });
     });
 };
-
-/*
-Error list:
-400: Bad Request
-500: Internal Server Error
-*/
