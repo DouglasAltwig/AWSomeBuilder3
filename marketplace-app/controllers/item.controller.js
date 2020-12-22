@@ -172,18 +172,18 @@ exports.download = (req, res) => {
   s3.getObject(params)
   .promise()
   .then(data => {
-    console.log(data);
     res.writeHead(200, {
       'Content-Type': data.Metadata.mimetype,
-      'Content-disposition': 'attachment;filename=' + data.Metadata.originalName,
+      'Content-Disposition': 'inline;filename=' + data.Metadata.originalname,
       'Content-Length': data.ContentLength,
       'x-timestamp': Date.now(),
       'x-sent': true,
-        'ETag': data.ETag.slice(1,-1),
-        'Cache-Control': 0,
-        'Accept-Ranges': 'bytes'
+      'ETag': data.ETag.slice(1,-1),
+      'Cache-Control': 0,
+      'Accept-Ranges': 'bytes'
     });
-    res.end(Buffer.from(data.Body, 'binary'));
+    let encodedImage = Buffer.from(data.Body, 'binary')
+    res.end(encodedImage);
   })
   .catch(err => {
     res.status(500).send({
