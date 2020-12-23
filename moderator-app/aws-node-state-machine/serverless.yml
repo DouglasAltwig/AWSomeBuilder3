@@ -114,3 +114,4 @@ functions:
 
 plugins:
   - serverless-dotenv-plugin
+  - serverless-step-functions
