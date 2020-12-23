@@ -47,4 +47,3 @@ resources:
 
 plugins:
   - serverless-dotenv-plugin
-  - serverless-step-functions
