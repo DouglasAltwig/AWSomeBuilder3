@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "serverless-dotenv-plugin": "^3.1.0"
+  }
+}
