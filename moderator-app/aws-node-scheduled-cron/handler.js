@@ -4,12 +4,6 @@ const AWS = require('aws-sdk')
 const AmazonS3URI = require('amazon-s3-uri')
 
 const REGION = process.env.REGION
-const HOSTNAME = process.env.HOSTNAME
-const PORT = process.env.PORT
-const PATH = process.env.PATH
-const TARGET_BUCKET = process.env.TARGET_BUCKET
-const SQS_URL = process.env.SQS_URL
-
 AWS.config.update({region: REGION || 'us-east-1'})
 
 const sqs = new AWS.SQS({apiVersion: '2012-11-05'})
@@ -21,11 +15,9 @@ async function FetchData(url){
   try {
     return await axios.get(url)
   } catch (error) {
-    let msg = `Unable to fetch data from: ${url}`
-    console.error(msg)
-    throw new Error(msg)
+    console.error(error, error.stack)
+    throw new Error(`Unable to fetch data from: ${url}`)
   }
-  
 }
 function GetMediaURIs(fileUris, hostname, port){
   let uris = fileUris.map(fileUri => {
@@ -33,8 +25,8 @@ function GetMediaURIs(fileUris, hostname, port){
       const {region, bucket, key} = AmazonS3URI(fileUri)
       return `http://${hostname}:${port}/api/items/download/${bucket}/${key}`
     } catch (error) {
-      console.warn(`${fileUri} is not a valid S3 uri`);
-      throw new Error(`Could not parse the S3 uri: ${fileUri}`)
+      console.log(error, error.stack)
+      throw new Error(`${fileUri} is not a valid S3 URI`)
     }
   })
   return uris
@@ -47,8 +39,8 @@ function UpdateItemUris(items, target_bucket) {
       const {region, bucket, key} = AmazonS3URI(uri)
       item.file_path = uri.replace(bucket, target_bucket)
     } catch (error) {
-      console.warn(`${uri} is not a valid S3 uri`);
-      throw new Error(`Could not parse the S3 uri: ${uri}`)
+      console.log(error, error.stack)
+      throw new Error(`${uri} is not a valid S3 URI`)
     }
   })
   return clonedItems
@@ -60,9 +52,8 @@ async function GetMediaFiles(uris) {
   try {
     return await Promise.all(promises)  
   } catch (error) {
-    let msg = `Unable to download media file(s) from: ${hostname}:${port}`
-    console.error(msg)
-    throw new Error(msg)
+    console.log(error, error.stack)
+    throw new Error(`Unable to download media file(s) from: ${uris}`)
   }
 }
 async function MoveFilesToS3(responses, target_bucket) {
@@ -78,9 +69,8 @@ async function MoveFilesToS3(responses, target_bucket) {
   try {
     return await Promise.all(S3PutObjectPromises)  
   } catch (error) {
-    let msg = `Unable to put object in S3`
-    console.error(msg)
-    throw new Error(msg)
+    console.log(error, error.stack)
+    throw new Error(`Unable to put object(s) in S3 bucket: ${target_bucket}`)
   }
 }
 async function SendMessages (items, sqs_url) {
@@ -95,9 +85,8 @@ async function SendMessages (items, sqs_url) {
   try {
     return await Promise.all(messagePromises)
   } catch (error) {
-    let msg = `Unable to send message(s) to: ${sqs_url}`
-    console.error(msg)
-    throw new Error(msg)
+    console.error(error, error.stack)
+    throw new Error(`Unable to send message(s) to: ${sqs_url}`)
   }
 }
 
@@ -109,6 +98,27 @@ module.exports.start = async (event, context) => {
    * @returns {undefined}
    */
   
+  const HOSTNAME = process.env.HOSTNAME
+  if (HOSTNAME === undefined) {
+    throw new Error(`No HOSTNAME environment variable is set.`)
+  }
+  const PORT = process.env.PORT
+  if (PORT === undefined) {
+    throw new Error(`No PORT environment variable is set.`)
+  }
+  const PATH = process.env.PATH
+  if (PATH === undefined) {
+    throw new Error(`No PATH environment variable is set.`)
+  }
+  const TARGET_BUCKET = process.env.TARGET_BUCKET
+  if (TARGET_BUCKET === undefined) {
+    throw new Error(`No TARGET_BUCKET environment variable is set.`)
+  }
+  const SQS_URL = process.env.SQS_URL
+  if (SQS_URL === undefined) {
+    throw new Error(`No SQS_URL environment variable is set.`)
+  }
+
   try {
     let url = `http://${HOSTNAME}:${PORT}/${PATH}`
     let response = await FetchData(url)
@@ -117,10 +127,10 @@ module.exports.start = async (event, context) => {
     let uris = GetMediaURIs(fileUris, HOSTNAME, PORT)
     let mediaFiles = await GetMediaFiles(uris)
     let updatedItems = UpdateItemUris(items, TARGET_BUCKET)
-    let etags = await MoveFilesToS3(mediaFiles, TARGET_BUCKET)
-    let messageIds = await SendMessages(updatedItems, SQS_URL)
+    await MoveFilesToS3(mediaFiles, TARGET_BUCKET)
+    await SendMessages(updatedItems, SQS_URL)
   } catch (error) {
-    console.log(error)
+    console.log(error, error.stack)
   }
 };
 
@@ -136,16 +146,16 @@ async function executeStepFunctions(stateMachine, records) {
   try{
     return await Promise.all(executionPromises)
   } catch(err) {
-    console.log('Could not start executing step functions');
     console.log(err, err.stack)
+    throw new Error('Could not start executing step functions')
   }
 }
 async function getStateMachines(params = {}) {
   try {
     return await stepFunctions.listStateMachines(params).promise()
   } catch (error) {
-    console.log('Could not list state machines')
     console.log(err, err.stack)
+    throw new Error('Could not get a list of state machines')
   }
 }
 module.exports.end = async (event, context) => {
@@ -160,17 +170,13 @@ module.exports.end = async (event, context) => {
     throw new Error(`No STATE_MACHINE_NAME environment variable is set.`)
   }
 
-  // console.log('Fetching the list of available workflows');
   let listStateMachines = await stepFunctions.listStateMachines({}).promise()
-  // console.log('Searching for the step function', listStateMachines)
   let match = listStateMachines.stateMachines.find(sf => sf.name === stateMachineName)
-  
   if (match === undefined) {
     throw new Error(`No state machine with name ${stateMachineName} found.`)
   }
-  // console.log('Start execution')
+
   let executions = await executeStepFunctions(match, event.Records)
-  // console.log('Execution responses:');
   console.log(executions)
 }
 
