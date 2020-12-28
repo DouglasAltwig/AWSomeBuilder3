@@ -16,6 +16,16 @@ provider:
         - "sqs:SendMessage"
       Resource:
         Fn::GetAtt: [SQSQueue, Arn]
+    - Effect: "Allow"
+      Action:
+        - "states:ListStateMachines"
+      Resource:
+        - 'arn:aws:states:us-east-1:215348766906:stateMachine:*'
+    - Effect: "Allow"
+      Action:
+        - "states:StartExecution"
+      Resource:
+        - "arn:aws:states:us-east-1:215348766906:stateMachine:ModerationEngine*"
 
 functions:
   start-lambda:
@@ -33,6 +43,8 @@ functions:
         Ref: SQSQueue
   end-lambda:
     handler: handler.end
+    environment:
+      STATE_MACHINE_NAME: "ModerationEngine"
     events:
       - sqs:
           arn:
