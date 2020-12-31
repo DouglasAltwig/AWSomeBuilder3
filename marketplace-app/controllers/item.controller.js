@@ -12,17 +12,17 @@ const Status = ["approved", "rejected", "in review", "escalated"]
 exports.create = (req, res) => {
   // Validate request
   if (!req.body.title) {
-    res.status(400).send({message: "Content can not be empty!"});
+    res.status(400).send({message: "Title can not be empty!"});
     return;
   }
   
   if (!req.body.description) {
-    res.status(400).send({message: "Content can not be empty!"});
+    res.status(400).send({message: "Description can not be empty!"});
     return;
   }
 
   if (!req.body.status) {
-    res.status(400).send({message: "Content can not be empty!"});
+    res.status(400).send({message: "Status can not be empty!"});
     return;
   }
 
