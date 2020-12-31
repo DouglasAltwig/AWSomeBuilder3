@@ -1,5 +1,5 @@
 'use strict';
-const axios = require('axios');
+const axios = require('axios')
 const AWS = require('aws-sdk')
 const AmazonS3URI = require('amazon-s3-uri')
 
@@ -137,9 +137,11 @@ module.exports.start = async (event, context) => {
 async function executeStepFunctions(stateMachine, records) {
   let executionPromises = []
   records.forEach(record => {
+    let item = JSON.parse(record.body)
+    let event = {item: item}
     let params = {
       stateMachineArn: stateMachine.stateMachineArn,
-      input: record.body
+      input: JSON.stringify(event) // string value
     }
     executionPromises.push(stepFunctions.startExecution(params).promise())
   })
@@ -177,6 +179,6 @@ module.exports.end = async (event, context) => {
   }
 
   let executions = await executeStepFunctions(match, event.Records)
-  console.log(executions)
+  // console.log(executions)
 }
 
