@@ -1,0 +1,14 @@
+{
+  "Records": [
+    {
+      "messageId": "4fcf35a6-f509-4943-964f-c3736fc35235",
+      "receiptHandle": "AQEBNtjIpWn6BKeJ4Lwh6hEINe9+B7zfSWLLCCt1culSRpGDksCyP2Jjfhw6PdviQCVqlQqP5DzXMZMCqv5zTNTW0TwIBjKH/CPsjjlbgx4zE5x6hyo85t48DskLIzszIKwflsfFXt19m+yq1WwpRExdl+nNUUZAWlQZz7MXHaMxoCpo45dFZT5OAFSWsFhEFB/w2E3zoSdg9vXxYcITXx2iChV7KB5mWJaPsFJD89QX+ua5YI8x8SS1s8Hr/iBz8vF6XmqxoPBAkh++vT6jWh+Univte2UWd78tlpqRqsDqO3hSut+YvUa80NU7v8onWsFr9GptsfbBbfCeMLH5Sdp1e6Q6tX0Hl//CqU0pLkwCUNRYkXyYp3fxl0DDC4n3pjovG8NoFNz8seclaGQ02PPphA==",
+      "body": "{\"id\":2,\"title\":\"MyEighthTitle\",\"description\":\"MyEighthDescription\",\"file_path\":\"https://octank-moderation.s3.amazonaws.com/1608319160954-meme.jpg\",\"status\":\"in review\",\"published\":false,\"createdAt\":\"2020-12-18T19:19:22.000Z\",\"updatedAt\":\"2020-12-18T19:19:22.000Z\"}",
+      "messageAttributes": {},
+      "md5OfBody": "dba039ff0a35d2e537c12ee91ac454f0",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-1:215348766906:ModerationQueue",
+      "awsRegion": "us-east-1"
+    }
+  ]
+}

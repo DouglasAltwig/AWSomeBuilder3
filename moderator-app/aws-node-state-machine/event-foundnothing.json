@@ -1,0 +1,34 @@
+{
+    "item": {
+        "id": 4,
+        "title": "Elgato Wave:3 - Microfone condensador USB e misturador digital para streaming, gravação, podcasting - Clipguard, Capacitive Mute, Plug & Play para PC / Mac",
+        "description": "Wave 3 é um microfone premium e uma solução de mixagem digital que funde a conveniência de plug and play com circuitos de grau de transmissão. Nunca mais se deve recortar graças à tecnologia proprietária anti-distorção. E combine todas as suas fontes de á",
+        "file_path": "https://octank-moderation.s3.amazonaws.com/1609359797575-Elgato%20Wave%203.jpg",
+        "status": "in review",
+        "published": false,
+        "createdAt": "2020-12-30T20:23:21.000Z",
+        "updatedAt": "2020-12-30T20:23:21.000Z"
+    },
+    "labels": {
+        "Labels": [
+            {
+                "Name": "Electrical Device",
+                "Confidence": 94.89745330810547,
+                "Instances": [],
+                "Parents": []
+            },
+            {
+                "Name": "Microphone",
+                "Confidence": 80.19159698486328,
+                "Instances": [],
+                "Parents": [
+                    {
+                        "Name": "Electrical Device"
+                    }
+                ]
+            }
+        ],
+        "LabelModelVersion": "2.0"
+    },
+    "length": 0
+}
