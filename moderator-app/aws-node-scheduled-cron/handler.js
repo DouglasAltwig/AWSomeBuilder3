@@ -138,10 +138,9 @@ async function executeStepFunctions(stateMachine, records) {
   let executionPromises = []
   records.forEach(record => {
     let item = JSON.parse(record.body)
-    let event = {item: item}
     let params = {
       stateMachineArn: stateMachine.stateMachineArn,
-      input: JSON.stringify(event) // string value
+      input: JSON.stringify({item: item}) // string value
     }
     executionPromises.push(stepFunctions.startExecution(params).promise())
   })
