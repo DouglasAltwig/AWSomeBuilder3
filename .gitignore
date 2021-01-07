@@ -102,3 +102,8 @@ dist
 
 # TernJS port file
 .tern-port
+.DS_Store
+credentials/US-EAST-1-KEY-PAIR.pem
+.gitignore
+credentials/new_user_credentials.csv
+.vscode/launch.json
