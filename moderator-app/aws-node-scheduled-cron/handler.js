@@ -3,8 +3,7 @@ const axios = require('axios')
 const AWS = require('aws-sdk')
 const AmazonS3URI = require('amazon-s3-uri')
 
-const REGION = process.env.REGION
-AWS.config.update({region: REGION || 'us-east-1'})
+AWS.config.update({region: process.env.REGION || 'us-east-1'})
 
 const sqs = new AWS.SQS({apiVersion: '2012-11-05'})
 const s3 = new AWS.S3({apiVersion: '2006-03-01'})
@@ -98,37 +97,32 @@ module.exports.start = async (event, context) => {
    * @returns {undefined}
    */
   
-  const HOSTNAME = process.env.HOSTNAME
-  if (HOSTNAME === undefined) {
+  if (typeof process.env.HOSTNAME === "undefined") {
     throw new Error(`No HOSTNAME environment variable is set.`)
   }
-  const PORT = process.env.PORT
-  if (PORT === undefined) {
+  if (typeof process.env.PORT === "undefined") {
     throw new Error(`No PORT environment variable is set.`)
   }
-  const PATH = process.env.PATH
-  if (PATH === undefined) {
+  if (typeof process.env.PATH === "undefined") {
     throw new Error(`No PATH environment variable is set.`)
   }
-  const TARGET_BUCKET = process.env.TARGET_BUCKET
-  if (TARGET_BUCKET === undefined) {
+  if (typeof process.env.TARGET_BUCKET === "undefined") {
     throw new Error(`No TARGET_BUCKET environment variable is set.`)
   }
-  const SQS_URL = process.env.SQS_URL
-  if (SQS_URL === undefined) {
+  if (typeof process.env.SQS_URL === "undefined") {
     throw new Error(`No SQS_URL environment variable is set.`)
   }
 
   try {
-    let url = `http://${HOSTNAME}:${PORT}/${PATH}`
+    let url = `http://${process.env.HOSTNAME}:${process.env.PORT}/${process.env.PATH}`
     let response = await FetchData(url)
     let items = response.data
     let fileUris = items.map(item => item.file_path)
     let uris = GetMediaURIs(fileUris, HOSTNAME, PORT)
     let mediaFiles = await GetMediaFiles(uris)
-    let updatedItems = UpdateItemUris(items, TARGET_BUCKET)
-    await MoveFilesToS3(mediaFiles, TARGET_BUCKET)
-    await SendMessages(updatedItems, SQS_URL)
+    let updatedItems = UpdateItemUris(items, process.env.TARGET_BUCKET)
+    await MoveFilesToS3(mediaFiles, process.env.TARGET_BUCKET)
+    await SendMessages(updatedItems, process.env.SQS_URL)
   } catch (error) {
     console.log(error, error.stack)
   }
@@ -166,15 +160,15 @@ module.exports.end = async (event, context) => {
    * @param {object} context AWS function's context
    * @returns {undefined}
    */
-  const stateMachineName = process.env.STATE_MACHINE_NAME
-  if (stateMachineName === undefined) {
+
+  if (typeof process.env.STATE_MACHINE_NAME === "undefined") {
     throw new Error(`No STATE_MACHINE_NAME environment variable is set.`)
   }
 
   let listStateMachines = await stepFunctions.listStateMachines({}).promise()
-  let match = listStateMachines.stateMachines.find(sf => sf.name === stateMachineName)
+  let match = listStateMachines.stateMachines.find(sf => sf.name === process.env.STATE_MACHINE_NAME)
   if (match === undefined) {
-    throw new Error(`No state machine with name ${stateMachineName} found.`)
+    throw new Error(`No state machine with name ${process.env.STATE_MACHINE_NAME} found.`)
   }
 
   let executions = await executeStepFunctions(match, event.Records)
