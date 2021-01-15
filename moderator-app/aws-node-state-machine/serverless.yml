@@ -33,6 +33,21 @@ provider:
   iamRoleStatements:
     - Effect: "Allow"
       Action:
+        - "sqs:SendMessage"
+      Resource:
+        Fn::GetAtt: [SQSQueue, Arn]
+    - Effect: "Allow"
+      Action:
+        - "states:ListStateMachines"
+      Resource:
+        - 'arn:aws:states:us-east-1:215348766906:stateMachine:*'
+    - Effect: "Allow"
+      Action:
+        - "states:StartExecution"
+      Resource:
+        - "arn:aws:states:us-east-1:215348766906:stateMachine:ModerationEngine*"
+    - Effect: "Allow"
+      Action:
         - "iam:GetRole"
         - "iam:PassRole"
         - "rekognition:*"
@@ -76,6 +91,8 @@ provider:
       MODERATION_TABLE: "${self:custom.MODERATION_TABLE}"
       HOSTNAME: "localhost"
       PORT: 8080
+      REGION: "${self:provider.region}"
+
 # you can add packaging information here
 # package:
 #   individually: true
@@ -90,11 +107,33 @@ provider:
 #    - exclude-me-dir/**
 
 custom:
+  QUEUE_NAME: "ModerationQueue-${opt:stage, self:provider.stage}"
   MODERATION_TABLE: "ModerationTable-${opt:stage, self:provider.stage}"
   SNS_TOPIC_NAME: "VideoPipelineChannel-${opt:stage, self:provider.stage}"
   SNS_DISPLAY_NAME: "Video Recognition Pipeline"
-
+  STATE_MACHINE_NAME: "ModerationEngine-${opt:stage, self:provider.stage}"
 functions:
+
+  Producer:
+    handler: handler.producer
+    # events:
+      # Invoke Lambda function every minute
+      # - schedule: rate(1 minute)
+    environment:
+      PATH: "api/items/inreview"
+      TARGET_BUCKET: "octank-moderation"
+      SQS_URL:
+        Ref: SQSQueue
+
+  Consumer:
+    handler: handler.consumer
+    environment:
+      STATE_MACHINE_NAME: "${self:custom.STATE_MACHINE_NAME}"
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [SQSQueue, Arn]
+  
   StartRecognition:
     handler: handler.startRecognition
     environment:
@@ -236,6 +275,11 @@ stepFunctions:
 # you can add CloudFormation resource templates here
 resources:
   Resources:
+
+    SQSQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: ${self:custom.QUEUE_NAME}
 
     ModerationDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
