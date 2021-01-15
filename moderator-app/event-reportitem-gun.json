@@ -1,0 +1,36 @@
+{
+    "JobId": "ff8f2a93b6ed157f43f6422a6bd599afccac9439bfc42b834f04ab60ff0cf475",
+    "item": {
+        "id": 4,
+        "title": "Pistola XD-M® - Springfield Armory",
+        "description": "A Springfield Armory XD é uma série de pistolas semi-automáticas vendidas pela Springfield Armory, Inc., nos Estados Unidos, juntamente com as variantes seguintes: XD-M, XD-S, e XD-E. Emoldurada com polímeros e predominantemente atirada por atacantes, a série é fabricada pela HS Produkt em Karlovac, Croácia.",
+        "file_path": "https://octank-moderation.s3.amazonaws.com/Pistola%20XD-M-1080p5s.mp4",
+        "status": "in review",
+        "published": false,
+        "createdAt": "2020-12-18T19:19:22.000Z",
+        "updatedAt": "2020-12-18T19:19:22.000Z"
+    },
+    "labels": {
+        "Labels": [
+            {
+                "Name": "Handgun",
+                "Confidence": 94.89745330810547,
+                "Instances": [],
+                "Parents": []
+            },
+            {
+                "Name": "Gun",
+                "Confidence": 80.19159698486328,
+                "Instances": [],
+                "Parents": [
+                    {
+                        "Name": "Weaponry"
+                    }
+                ]
+            }
+        ],
+        "LabelModelVersion": "2.0"
+    },
+    "CategoryMatch": "Firearm"
+
+}

@@ -1,0 +1,181 @@
+{
+    "Records": [
+        {
+            "eventID": "c2f9099a529a544e745d4afd51001885",
+            "eventName": "INSERT",
+            "eventVersion": "1.1",
+            "eventSource": "aws:dynamodb",
+            "awsRegion": "us-east-1",
+            "dynamodb": {
+                "ApproximateCreationDateTime": 1609351740,
+                "Keys": {
+                    "id": {
+                        "N": "3"
+                    }
+                },
+                "NewImage": {
+                    "item": {
+                        "M": {
+                            "file_path": {
+                                "S": "https://octank-moderation.s3.amazonaws.com/1609343776032-firearm1.jpg"
+                            },
+                            "createdAt": {
+                                "S": "2020-12-30T15:56:19.000Z"
+                            },
+                            "description": {
+                                "S": "A Springfield Armory XD é uma série de pistolas semi-automáticas vendidas pela Springfield Armory, Inc., nos Estados Unidos, juntamente com as variantes seguintes: XD-M, XD-S, e XD-E. Emoldurada com polímeros e predominantemente atirada por atacantes, a s"
+                            },
+                            "id": {
+                                "N": "3"
+                            },
+                            "published": {
+                                "BOOL": false
+                            },
+                            "title": {
+                                "S": "Pistola XD-M® - Springfield Armory"
+                            },
+                            "status": {
+                                "S": "in review"
+                            },
+                            "updatedAt": {
+                                "S": "2020-12-30T15:56:19.000Z"
+                            }
+                        }
+                    },
+                    "length": {
+                        "N": "4"
+                    },
+                    "id": {
+                        "N": "3"
+                    },
+                    "labels": {
+                        "M": {
+                            "Labels": {
+                                "L": [
+                                    {
+                                        "M": {
+                                            "Instances": {
+                                                "L": [
+                                                    {
+                                                        "M": {
+                                                            "Confidence": {
+                                                                "N": "98.11923217773438"
+                                                            },
+                                                            "BoundingBox": {
+                                                                "M": {
+                                                                    "Left": {
+                                                                        "N": "0.10030132532119751"
+                                                                    },
+                                                                    "Top": {
+                                                                        "N": "0.06693758815526962"
+                                                                    },
+                                                                    "Height": {
+                                                                        "N": "0.8416468501091003"
+                                                                    },
+                                                                    "Width": {
+                                                                        "N": "0.7223817706108093"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "Confidence": {
+                                                "N": "98.11923217773438"
+                                            },
+                                            "Parents": {
+                                                "L": [
+                                                    {
+                                                        "M": {
+                                                            "Name": {
+                                                                "S": "Weapon"
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "Name": {
+                                                "S": "Gun"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "M": {
+                                            "Instances": {
+                                                "L": []
+                                            },
+                                            "Confidence": {
+                                                "N": "98.11923217773438"
+                                            },
+                                            "Parents": {
+                                                "L": []
+                                            },
+                                            "Name": {
+                                                "S": "Weapon"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "M": {
+                                            "Instances": {
+                                                "L": []
+                                            },
+                                            "Confidence": {
+                                                "N": "98.11923217773438"
+                                            },
+                                            "Parents": {
+                                                "L": []
+                                            },
+                                            "Name": {
+                                                "S": "Weaponry"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "M": {
+                                            "Instances": {
+                                                "L": []
+                                            },
+                                            "Confidence": {
+                                                "N": "91.95695495605469"
+                                            },
+                                            "Parents": {
+                                                "L": [
+                                                    {
+                                                        "M": {
+                                                            "Name": {
+                                                                "S": "Gun"
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "M": {
+                                                            "Name": {
+                                                                "S": "Weapon"
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "Name": {
+                                                "S": "Handgun"
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "LabelModelVersion": {
+                                "S": "2.0"
+                            }
+                        }
+                    }
+                },
+                "SequenceNumber": "3826900000000024249356980",
+                "SizeBytes": 931,
+                "StreamViewType": "NEW_AND_OLD_IMAGES"
+            },
+            "eventSourceARN": "arn:aws:dynamodb:us-east-1:215348766906:table/ModerationTable-dev/stream/2020-12-30T17:19:39.506"
+        }
+    ]
+}

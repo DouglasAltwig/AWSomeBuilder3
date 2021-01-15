@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "amazon-s3-uri": "^0.1.0",
+    "aws-sdk": "^2.817.0",
+    "axios": "^0.21.1",
+    "serverless-dotenv-plugin": "^3.1.0",
+    "serverless-step-functions": "^2.29.0",
+    "uuid": "^3.3.2"
+  }
+}
