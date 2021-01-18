@@ -24,7 +24,14 @@ provider:
   name: aws
   runtime: nodejs12.x
   lambdaHashingVersion: 20201221
-
+  # memorySize: 512 # optional, in MB, default is 1024
+  # timeout: 10 # optional, in seconds, default is 6
+  vpc:
+    securityGroupIds:
+      - !GetAtt VpcEndpointLambdaSecurityGroup.GroupId
+    subnetIds:
+      - Ref: SubnetAPrivate
+      - Ref: SubnetBPrivate
 # you can overwrite defaults here
   stage: dev
   region: us-east-1
@@ -85,8 +92,6 @@ provider:
         - "dynamodb:GetShardIterator"
         - "dynamodb:ListStreams"
       Resource: "arn:aws:dynamodb:*:*:table/*"
-
-# you can define service wide environment variables here
   environment:
       MODERATION_TABLE: "${self:custom.MODERATION_TABLE}"
       HOSTNAME: "localhost"
@@ -112,8 +117,8 @@ custom:
   SNS_TOPIC_NAME: "VideoPipelineChannel-${opt:stage, self:provider.stage}"
   SNS_DISPLAY_NAME: "Video Recognition Pipeline"
   STATE_MACHINE_NAME: "ModerationEngine-${opt:stage, self:provider.stage}"
-functions:
 
+functions:
   Producer:
     handler: handler.producer
     # events:
@@ -124,7 +129,6 @@ functions:
       TARGET_BUCKET: "octank-moderation"
       SQS_URL:
         Ref: SQSQueue
-
   Consumer:
     handler: handler.consumer
     environment:
@@ -135,10 +139,14 @@ functions:
             Fn::GetAtt: [SQSQueue, Arn]
   
   StartRecognition:
+    # description: optional description for your Lambda
     handler: handler.startRecognition
     environment:
       SUPPORTED_IMAGE_FORMATS: ".jpg,.jpeg,.png"
       SUPPORTED_VIDEO_FORMATS: ".mp4,.mov"
+    # memorySize: 512 # optional, in MB, default is 1024
+    # timeout: 10 # optional, in seconds, default is 6
+    # https://www.serverless.com/framework/docs/providers/aws/guide/functions/
   StartSyncRecognition:
     handler: handler.startSyncRecognition
   StartAsyncRecognition:
@@ -164,9 +172,9 @@ functions:
     environment:
       GUNS_NAME_CONFIDENCE: '{"Gun":98,"Weapon":98,"Weaponry":98,"Handgun":91,"Rifle":63}'
   ReportItem:
-    handler: handler.reportItem #foundsomething
+    handler: handler.reportItem
   UpdateItemStatus:
-    handler: handler.updateItemStatus #foundnothing
+    handler: handler.updateItemStatus
   StreamFunction:
     handler: handler.streamFunction
     events:
@@ -276,6 +284,224 @@ stepFunctions:
 resources:
   Resources:
 
+    VPC:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: 10.1.0.0/16
+        EnableDnsSupport: true
+        EnableDnsHostnames: true
+        InstanceTenancy: default
+        Tags:
+        - Key: Name
+          Value: VPC(10.1.0.0/16)
+    
+    SubnetAPrivate:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone:
+          Fn::Select:
+          - '0'
+          - Fn::GetAZs: ''
+        CidrBlock: 10.1.16.0/20
+        VpcId:
+          Ref: VPC
+        Tags:
+        - Key: Name
+          Value: Private-Subnet-A-us-east-1a
+        - Key: Reach
+          Value: private
+    
+    SubnetBPrivate:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone:
+          Fn::Select:
+          - '1'
+          - Fn::GetAZs: ''
+        CidrBlock: 10.1.48.0/20
+        VpcId:
+          Ref: VPC
+        Tags:
+        - Key: Name
+          Value: Private-Subnet-B-us-east-1b
+        - Key: Reach
+          Value: private
+    
+    RouteTableAssociationAPrivate:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId:
+          Ref: SubnetAPrivate
+        RouteTableId:
+          Ref: RouteTablePrivate
+    
+    RouteTableAssociationBPrivate:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId:
+          Ref: SubnetBPrivate
+        RouteTableId:
+          Ref: RouteTablePrivate
+    
+    SubnetNetworkAclAssociationAPrivate:
+      Type: AWS::EC2::SubnetNetworkAclAssociation
+      Properties:
+        SubnetId:
+          Ref: SubnetAPrivate
+        NetworkAclId:
+          Ref: NetworkAclPrivate
+    
+    SubnetNetworkAclAssociationBPrivate:
+      Type: AWS::EC2::SubnetNetworkAclAssociation
+      Properties:
+        SubnetId:
+          Ref: SubnetBPrivate
+        NetworkAclId:
+          Ref: NetworkAclPrivate
+    
+    RouteTablePrivate:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:
+          Ref: VPC
+        Tags:
+        - Key: Name
+          Value: Private-Route-Table
+
+    NetworkAclPrivate:
+      Type: AWS::EC2::NetworkAcl
+      Properties:
+        VpcId:
+          Ref: VPC
+        Tags:
+        - Key: Name
+          Value: Private
+    
+    NetworkAclEntryInPrivateAllowVPC:
+      Type: AWS::EC2::NetworkAclEntry
+      Properties:
+        NetworkAclId:
+          Ref: NetworkAclPrivate
+        RuleNumber: '99'
+        Protocol: "-1"
+        RuleAction: allow
+        Egress: 'false'
+        CidrBlock: 0.0.0.0/0
+
+    NetworkAclEntryOutPrivateAllowVPC:
+      Type: AWS::EC2::NetworkAclEntry
+      Properties:
+        NetworkAclId:
+          Ref: NetworkAclPrivate
+        RuleNumber: '99'
+        Protocol: "-1"
+        RuleAction: allow
+        Egress: 'true'
+        CidrBlock: 0.0.0.0/0
+
+    
+
+
+
+    SNSVPCEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties: 
+        PrivateDnsEnabled: True
+        SecurityGroupIds: 
+          - !GetAtt VpcEndpointSecurityGroup.GroupId
+        ServiceName: 'com.amazonaws.us-east-1.sns'
+        SubnetIds: 
+          - Ref: SubnetAPrivate
+          - Ref: SubnetBPrivate
+        VpcEndpointType: Interface
+        VpcId: !Ref VPC
+    
+    SQSVPCEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties: 
+        PrivateDnsEnabled: True
+        SecurityGroupIds: 
+          - !GetAtt VpcEndpointSecurityGroup.GroupId
+        ServiceName: 'com.amazonaws.us-east-1.sqs'
+        SubnetIds: 
+          - Ref: SubnetAPrivate
+          - Ref: SubnetBPrivate
+        VpcEndpointType: Interface
+        VpcId: !Ref VPC
+
+    RekognitionVPCEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties: 
+        PrivateDnsEnabled: True
+        SecurityGroupIds: 
+          - !GetAtt VpcEndpointSecurityGroup.GroupId
+        ServiceName: 'com.amazonaws.us-east-1.rekognition'
+        SubnetIds: 
+          - Ref: SubnetAPrivate
+          - Ref: SubnetBPrivate
+        VpcEndpointType: Interface
+        VpcId: !Ref VPC
+    
+    StepFunctionVPCEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties: 
+        PrivateDnsEnabled: True
+        SecurityGroupIds: 
+          - !GetAtt VpcEndpointSecurityGroup.GroupId
+        ServiceName: 'com.amazonaws.us-east-1.states'
+        SubnetIds: 
+          - Ref: SubnetAPrivate
+          - Ref: SubnetBPrivate
+        VpcEndpointType: Interface
+        VpcId: !Ref VPC
+
+    DynamoDBVPCEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties: 
+        PrivateDnsEnabled: True
+        SecurityGroupIds: 
+          - !GetAtt VpcEndpointSecurityGroup.GroupId
+        ServiceName: 'com.amazonaws.us-east-1.dynamodb'
+        SubnetIds: 
+          - Ref: SubnetAPrivate
+          - Ref: SubnetBPrivate
+        VpcEndpointType: Gateway
+        VpcId: !Ref VPC
+
+    S3VPCEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties: 
+        PrivateDnsEnabled: True
+        SecurityGroupIds: 
+          - !GetAtt VpcEndpointSecurityGroup.GroupId
+        ServiceName: 'com.amazonaws.us-east-1.s3'
+        SubnetIds: 
+          - Ref: SubnetAPrivate
+          - Ref: SubnetBPrivate
+        VpcEndpointType: Gateway
+        VpcId: !Ref VPC
+
+
+    VpcEndpointSecurityGroup:
+      Type: 'AWS::EC2::SecurityGroup'
+      Properties:
+        VpcId: !Ref VPC
+        GroupName: ${self:service}-${self:provider.stage}-VPC-Endpoint
+        GroupDescription: 'Security group for VPC Endpoint'
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            SourceSecurityGroupId: !GetAtt VpcEndpointLambdaSecurityGroup.GroupId
+    VpcEndpointLambdaSecurityGroup:
+      Type: 'AWS::EC2::SecurityGroup'
+      Properties:
+        VpcId: !Ref VPC
+        GroupDescription: 'Security group for VPC Endpoint Lambda'
+
+
+
+
     SQSQueue:
       Type: "AWS::SQS::Queue"
       Properties:
@@ -338,22 +564,39 @@ resources:
         Roles: 
           - 
             Ref: "RekognitionNotificationChannelRole"
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
 
-# environment:
-#       statemachine_arn: ${self:resources.Outputs.MyStateMachine.Value}
-# resources:
-# Outputs:
-#     MyStateMachine:
-#       Description: The ARN of the example state machine
-#       Value:
-#         Ref: MyStateMachine
+  Outputs:
+    VPC:
+      Description: VPC.
+      Value:
+        Ref: VPC
 
+    SubnetAPrivate:
+      Description: Subnet A private.
+      Value:
+        Ref: SubnetAPrivate
 
+    SubnetBPrivate:
+      Description: Subnet B private.
+      Value:
+        Ref: SubnetBPrivate
 
+    RouteTablePrivate:
+      Description: Route table private.
+      Value:
+        Ref: RouteTablePrivate
+
+    VpcEndpointLambdaSecurityGroup:
+      Description: Route table public.
+      Value:
+        Ref: VpcEndpointLambdaSecurityGroup
+
+# com.amazonaws.us-east-1.dynamodb
+# com.amazonaws.us-east-1.s3
+# com.amazonaws.us-east-1.iam
+# com.amazonaws.us-east-1.sqs
+# com.amazonaws.us-east-1.stepFunctions
+# com.amazonaws.us-east-1.rekognition
 # #{AWS::Region}
 # #{AWS::AccountId}
 # ${self:service}-${opt:stage}
